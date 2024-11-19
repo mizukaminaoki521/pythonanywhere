@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Clarinet fingering</title>
+</head>
+<body>
+    <h4>入力画面</h4>
+    <h5>入力例 E3,F#3,Bb3,C4 範囲[E3~F7]</h5>
+
+    {% if post_id %}
+    <form action="{% url 'sample_app:edit_post' post_id=post_id %}" method="post">
+    {% else %}
+    <form action="{% url 'sample_app:create_post' %}" method="post">
+    {% endif %}
+      {% csrf_token %}
+      {{ form.name }}
+          <button type="submit">送信</button>
+    </form>
+    <!--<a href="{% url 'sample_app:read_post' %}">戻る</a>-->
+</body>
+</html>
