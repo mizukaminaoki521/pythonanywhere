@@ -18,11 +18,11 @@ def load_fingering_cost():
     global dic_note
     global tone_range
 
-    df=pd.read_csv("sample_app/fingering_cost.csv",header=None,sep=" ")
+    df=pd.read_csv("/home/MizukamiNaoki/mysite/pythonanywhere/my_project/my_project/sample_app/fingering_cost.csv",header=None,sep=" ")
     dic_cost = df.set_index(0)[1].to_dict()
-    df=pd.read_csv("sample_app/CL_Finger_mod.txt",header=None)
+    df=pd.read_csv("/home/MizukamiNaoki/mysite/pythonanywhere/my_project/my_project/sample_app/CL_Finger_mod.txt",header=None)
     dict_fingering = df.set_index(0).T.to_dict('list')
-    
+
     fingering_list=remove_ng_list(df[0].to_list())
     tone_range = list(set(item.split('_')[0] for item in fingering_list))
 
@@ -31,6 +31,6 @@ def load_fingering_cost():
 
     for tone in fingering_list:
         tone_key=tone.split('_')[0]
-        dic_note[tone_key].append(tone)    
-    return 
+        dic_note[tone_key].append(tone)
+    return
 

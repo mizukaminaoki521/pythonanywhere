@@ -41,6 +41,7 @@ def dijkstra(target_fingering):
     for note in target_fingering:
         if note not in throat_note:
             throat_only_flag=0
+
     if throat_only_flag==1:
         output_list=[]
         output_list_tmp=[]
@@ -52,7 +53,7 @@ def dijkstra(target_fingering):
         distances={}
         max_cost=100000000
         for i, d in enumerate(target_fingering):
-            #print(i,target_fingering[i])
+            #print(i,target_fingering[i],target_fingering[i+1],target_fingering[i+2])
             search_note=[]
             if i==0:
                 notes1=dic_note[target_fingering[i]]
@@ -82,7 +83,7 @@ def dijkstra(target_fingering):
                     for note3 in notes3:
                         if note2+note3 in dic_cost:
                             tmp_search_note2.append(note2)
-                
+
                 search_note = list(set(tmp_search_note1) | set(tmp_search_note2))
             search_note = list(set(search_note))
             #print(search_note)
@@ -90,6 +91,7 @@ def dijkstra(target_fingering):
             distances[i]={}
             #notes=dic_note[d]
             for note in search_note:
+                #print(note,target_fingering[i])
                 init_cost=max_cost
                 init_route=[[]]
                 if i ==0:
@@ -98,13 +100,44 @@ def dijkstra(target_fingering):
                 distances[i][f"{note}"]={}
                 distances[i][f"{note}"]["cost"]=init_cost
                 distances[i][f"{note}"]["route"]=init_route
-        
+
+                if target_fingering[i] in throat_note:
+                    distances[i][f"{note}rh"]={}
+                    distances[i][f"{note}rh"]["cost"]=init_cost
+                    distances[i][f"{note}rh"]["route"]=init_route
+
         for i in range(1,len(target_fingering)):
             for bkey, bvalue in distances[i-1].items():
+                bkey_origin=bkey
+                before_rh=0
+                if "rh" in bkey:
+                    bkey_origin=bkey[:bkey.find("rh")]
+                    before_rh=1
+
                 for akey, avalue in distances[i].items():
-                    if bkey+akey in dic_cost:
-                        tmp_cost=dic_cost[bkey+akey]
-                        #print(i,bkey,akey,avalue["cost"],bvalue["cost"],tmp_cost)
+                    akey_origin=akey
+                    after_rh=0
+                    if "rh" in akey:
+                        akey_origin=akey[:akey.find("rh")]
+                        after_rh=1
+
+                    if bkey_origin+akey_origin in dic_cost:
+                        tmp_cost=dic_cost[bkey_origin+akey_origin]
+                        rh_match=int(dic_cost[bkey_origin+akey_origin+"rh"])
+                        #print(bkey,akey,tmp_cost,rh_match)
+                        if before_rh==0:
+                            if after_rh==1 and rh_match==0:
+                                tmp_cost+=10000000
+                            elif after_rh==0 and rh_match==1:
+                                tmp_cost+=10000000
+                            elif bkey_origin[:bkey_origin.find("_")] in throat_note and akey_origin[:akey_origin.find("_")] not in throat_note and rh_match==0:
+                                tmp_cost+=10000000
+                        if before_rh==1:
+                            if after_rh==1 and rh_match==0:
+                                assert(0)
+                            #elif after_rh==0 and rh_match==0:
+                            #    tmp_cost+=10000000
+
                         if avalue["cost"]>bvalue["cost"]+tmp_cost:
                             avalue["cost"]=bvalue["cost"]+tmp_cost
                             avalue["route"]=[]
@@ -116,11 +149,9 @@ def dijkstra(target_fingering):
                                 tmp_route.append(akey)
                                 avalue["route"][-1]=tmp_route
                             assert(len(avalue["route"][0])==i+1)
-                        
                         elif avalue["cost"]==bvalue["cost"]+tmp_cost:
                             route=bvalue["route"].copy()
                             for r in route:
-                                
                                 before_length=len(avalue["route"])
                                 avalue["route"].append([])
                                 tmp_route=r.copy()
@@ -130,6 +161,7 @@ def dijkstra(target_fingering):
                                 assert(before_length==len(avalue["route"])-1)
                                 #print(len(avalue["route"][-1]),i+1)
                                 assert(len(avalue["route"][-1])==i+1)
+
     i=len(target_fingering)-1
     min_cost=max_cost
     min_key=[]
@@ -143,12 +175,16 @@ def dijkstra(target_fingering):
 
     output_list=[]
     for key in min_key:
+        #print(key,distances[i][key]["cost"])
         for paths in distances[i][key]["route"]:
             output_list_tmp=[]
             for path in paths:
+                path=path.replace("rh","")
                 output_list_tmp.append(int(path.split("_", 1)[1]))
             output_list.append(output_list_tmp)
+    output_list = list(map(list, set(map(tuple, output_list))))
     return output_list
+
 
 def create_post(request):
     """
@@ -169,7 +205,7 @@ def create_post(request):
     if request.method == 'POST':
         # POST されたデータにより form を作成
         form = PostForm(request.POST, instance=post)
-        
+
         # 入力されたデータのバリデーション
         if form.is_valid():
             # チェック結果に問題なければデータを作成する
@@ -217,9 +253,9 @@ def read_post(request):
         sharp_note=get_sharp_note(note[:-1],note[-1])
         sharp_target_fingering.append(sharp_note)
 
-    df=pd.read_csv("sample_app/CL_Finger_mod.txt",header=None)
+    df=pd.read_csv("/home/MizukamiNaoki/mysite/pythonanywhere/my_project/my_project/sample_app/CL_Finger_mod.txt",header=None)
     dict_fingering = df.set_index(0).T.to_dict('list')
-  
+
     output = {"name":posts.name,"target":[]}
 
     for j in range(len(index_list)):
@@ -244,10 +280,10 @@ def read_post(request):
             kouho_dic["hole_list"].append(tone_hole)
 
         assert(len(melody_list)==len(sharp_target_fingering))
-        
+
         output["target"].append(kouho_dic)
         #print(output)
-   
+
     return render(request,
                   'sample_app/post_list.html',  # 呼び出す Template
                   {'posts': output}

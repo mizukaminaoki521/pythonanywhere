@@ -14,7 +14,7 @@ def dijkstra(target_fingering):
     for note in target_fingering:
         if note not in throat_note:
             throat_only_flag=0
-    
+
     if throat_only_flag==1:
         output_list=[]
         output_list_tmp=[]
@@ -56,7 +56,7 @@ def dijkstra(target_fingering):
                     for note3 in notes3:
                         if note2+note3 in dic_cost:
                             tmp_search_note2.append(note2)
-                
+
                 search_note = list(set(tmp_search_note1) | set(tmp_search_note2))
             search_note = list(set(search_note))
             #print(search_note)
@@ -64,6 +64,7 @@ def dijkstra(target_fingering):
             distances[i]={}
             #notes=dic_note[d]
             for note in search_note:
+                #print(note,target_fingering[i])
                 init_cost=max_cost
                 init_route=[[]]
                 if i ==0:
@@ -72,14 +73,44 @@ def dijkstra(target_fingering):
                 distances[i][f"{note}"]={}
                 distances[i][f"{note}"]["cost"]=init_cost
                 distances[i][f"{note}"]["route"]=init_route
-        
-        #print(distances)
+
+                if target_fingering[i] in throat_note:
+                    distances[i][f"{note}rh"]={}
+                    distances[i][f"{note}rh"]["cost"]=init_cost
+                    distances[i][f"{note}rh"]["route"]=init_route
+
         for i in range(1,len(target_fingering)):
             for bkey, bvalue in distances[i-1].items():
+                bkey_origin=bkey
+                before_rh=0
+                if "rh" in bkey:
+                    bkey_origin=bkey[:bkey.find("rh")]
+                    before_rh=1
+
                 for akey, avalue in distances[i].items():
-                    if bkey+akey in dic_cost:
-                        tmp_cost=dic_cost[bkey+akey]
-                        #print(i,bkey,akey,avalue["cost"],bvalue["cost"],tmp_cost)
+                    akey_origin=akey
+                    after_rh=0
+                    if "rh" in akey:
+                        akey_origin=akey[:akey.find("rh")]
+                        after_rh=1
+
+                    if bkey_origin+akey_origin in dic_cost:
+                        tmp_cost=dic_cost[bkey_origin+akey_origin]
+                        rh_match=int(dic_cost[bkey_origin+akey_origin+"rh"])
+                        #print(bkey,akey,tmp_cost,rh_match)
+                        if before_rh==0:
+                            if after_rh==1 and rh_match==0:
+                                tmp_cost+=10000000
+                            elif after_rh==0 and rh_match==1:
+                                tmp_cost+=10000000
+                            elif bkey_origin[:bkey_origin.find("_")] in throat_note and akey_origin[:akey_origin.find("_")] not in throat_note and rh_match==0:
+                                tmp_cost+=10000000
+                        if before_rh==1:
+                            if after_rh==1 and rh_match==0:
+                                assert(0)
+                            #elif after_rh==0 and rh_match==0:
+                            #    tmp_cost+=10000000
+
                         if avalue["cost"]>bvalue["cost"]+tmp_cost:
                             avalue["cost"]=bvalue["cost"]+tmp_cost
                             avalue["route"]=[]
@@ -91,11 +122,9 @@ def dijkstra(target_fingering):
                                 tmp_route.append(akey)
                                 avalue["route"][-1]=tmp_route
                             assert(len(avalue["route"][0])==i+1)
-                        
                         elif avalue["cost"]==bvalue["cost"]+tmp_cost:
                             route=bvalue["route"].copy()
                             for r in route:
-                                
                                 before_length=len(avalue["route"])
                                 avalue["route"].append([])
                                 tmp_route=r.copy()
@@ -105,6 +134,7 @@ def dijkstra(target_fingering):
                                 assert(before_length==len(avalue["route"])-1)
                                 #print(len(avalue["route"][-1]),i+1)
                                 assert(len(avalue["route"][-1])==i+1)
+
     i=len(target_fingering)-1
     min_cost=max_cost
     min_key=[]
@@ -118,9 +148,11 @@ def dijkstra(target_fingering):
 
     output_list=[]
     for key in min_key:
+        print(key,distances[i][key]["cost"])
         for paths in distances[i][key]["route"]:
             output_list_tmp=[]
             for path in paths:
+                path=path.replace("rh","")
                 output_list_tmp.append(int(path.split("_", 1)[1]))
             output_list.append(output_list_tmp)
     return output_list
@@ -196,7 +228,8 @@ def get_finger_dic(finger_array):
     return finger_dic
 
 def remove_ng_list(fingering_list):
-    ng_tone_list=["A#3_1","B3_4","C4_1","C4_2","C#4_1","D4_1","D4_2","D4_3","E4_2","E4_3","E4_4","F4_2","F4_3","F4_4","F4_5","F#4_2","G4_4","G#4_6","A4_6","A#4_4","C5_4","C#5_3","D5_1","D#5_1","F5_2","G5_3","G5_4","G#5_1","G#5_2","A#5_7","B5_3","B5_4","B5_6","C6_5","C#6_5","D6_4","D#6_3","E6_3","E6_4","E6_5","E6_6","F6_4","F6_5","F6_6","F#6_5","F#6_7"]
+    ng_tone_list=["A#3_1","B3_4","C4_1","C4_2","C#4_1","D4_1","D4_2","D4_3","D#4_7","E4_2","E4_3","E4_4","F4_2","F4_3","F4_4","F4_5","F#4_2","G4_4","G#4_6","A4_6","A#4_4","C5_4","C#5_3","D5_1","D#5_1","F5_2","G5_3","G5_4","G#5_1","G#5_2","A#5_7","B5_3","B5_4","B5_6","C6_2","C6_5","C#6_3","C#6_4","C#6_5","D6_4","D6_5","D#6_3","E6_2","E6_3","E6_4","E6_5","E6_6","F6_4","F6_5","F6_6","F#6_5","F#6_7","G#6_5","B6_1","B6_4","C7_1"]
+
     tmp_list=[]
     for fingering in fingering_list:
         if fingering not in ng_tone_list:
@@ -232,7 +265,7 @@ def make_fingering_cost_csv():
     fingering_list=remove_ng_list(df[0].to_list())
     #df.columns=["0","L0","L1","L2","L3","L4","L5","L6","L7","L8","L9","L10","L11","R2","R3","R4","R5","R6","R7","R8","R9","R10","R11","R12","R13"]
     #df=df[(df["L5"]==1) & (df["L6"]==1)]
-    
+
     #使えない運指を除く
     tone_range = list(set(item.split('_')[0] for item in fingering_list))
 
@@ -243,7 +276,7 @@ def make_fingering_cost_csv():
     for tone in fingering_list:
         tone_key=tone.split('_')[0]
         dic_note[tone_key].append(tone)
-    
+
     for i in range(len(fingering_list)):
         before_tone=fingering_list[i]
         before_finger_dic=get_finger_dic(dict_fingering[before_tone])
@@ -278,7 +311,7 @@ def make_fingering_cost_csv():
                 left_on=0
                 """
                 flag=0
-                if before_tone=="A#3_0" and after_tone=="B3_0":    
+                if before_tone=="A#3_0" and after_tone=="B3_0":
                     print(before_finger_dic)
                     print(after_finger_dic)
                     flag=1
@@ -348,7 +381,7 @@ def make_fingering_cost_csv():
 
                 if before_tone[before_tone.find("_")+1:]=="0" and after_tone[after_tone.find("_")+1:]=="0":
                     cost=max(cost-1.5*CORRECTION_VALUE,0)
-                
+
                 dic_cost[before_tone+after_tone]=cost
 
     with open("fingering_cost.csv", 'w') as file:
@@ -361,7 +394,7 @@ def check_fingering_and_cost(dict_fingering,target_fingering,answer):
     for i, tone in enumerate(target_fingering):
         finger_dic=get_finger_dic(dict_fingering[tone+"_"+str(answer[i])])
         print(tone+"_"+str(answer[i]),finger_dic)
-                
+
     for i in range(1,len(target_fingering)):
         before=target_fingering[i-1]+"_"+str(answer[i-1])
         after=target_fingering[i]+"_"+str(answer[i])
@@ -376,7 +409,7 @@ def test():
 
     test_list=[
                 ["F#3","C4","F4"],
-                ["G3","A#3","D#4"],        
+                ["G3","A#3","D#4"],
                 ["G3", "C4", "D#4"],
                 ["G#3", "C4", "D#4"],
                 ["G#3", "B3", "E4"],
@@ -396,10 +429,10 @@ def test():
                 ["E4","D#4","A4","G#4","G4"],
                 ["D#4","D4","E4","A#3","B3","C4","B3"],
                 ["D#4","D4","G#4","A4","A#3","B3","F4","E4","D#5","D5"],
-                
+
                 #scale
                 ["C4","D4","E4","F4","G4","A4","B4","C5","D5","E5","F5","G5","A5","B5","C6","D6","E6","F6","G6"],
-                ["G6","F6","E6","D6","C6","B5","A5","G5","F5","E5","D5","C5","B4","A4","G4","F4","E4","D4","C4","B3","A3","G3","F3","E3","F3","G3","A3","B3","C4","D4","C4"],                
+                ["G6","F6","E6","D6","C6","B5","A5","G5","F5","E5","D5","C5","B4","A4","G4","F4","E4","D4","C4","B3","A3","G3","F3","E3","F3","G3","A3","B3","C4","D4","C4"],
                 ["G3","A3","B3","C4","D4","E4","F#4","G4","A4","B4","C5","D5","E5","F#5","G5","A5","B5","C6","D6","E6","F#6","G6"],
                 ["G6","F#6","E6","D6","C6","B5","A5","G5","F#5","E5","D5","C5","B4","A4","G4","F#4","E4","D4","C4","B3","A3","G3","F#3","E3","F#3","G3","A3","G3"],
                 ["G3","A3","B3","C4","D4","E4","F#4","G4","A4","B4","C5","D5","E5","F#5","G5","A5","B5","C6","D6","E6","F#6","G6"],
@@ -437,7 +470,7 @@ def test():
                 ["E3","D4","E3","D4","E3"],
                 ["E3","D#4","E3","D#4","E3"],
                 ["E3","E4","E3","E4","E3"],
-                
+
                 ["F3","F#3","F3","F#3","F3"],
                 ["F3","G3","F3","G3","F3"],
                 ["F3","G#3","F3","G#3","F3"],
@@ -463,7 +496,7 @@ def test():
                 ["F#3","E4","F#3","E4","F#3"],
                 ["F#3","F4","F#3","F4","F#3"],
                 ["F#3","F#4","F#3","F#4","F#3"],
-                
+
                 ["G3","G#3","G3","G#3","G3"],
                 ["G3","A3","G3","A3","G3"],
                 ["G3","A#3","G3","A#3","G3"],
@@ -625,13 +658,13 @@ def test():
         [[1, 0, 0]],
         [[1,0,1,1,0,1,0,1]],
         [[0,0]],
-        
+
         [[0,0,0,0,0,0,0,0,4,0,4,0,0,1,5,1,5]],
         [[0,1,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,4]],
         [[0,0,0,0,0]],
         [[0,0,0,0,1,0,0]],
         [[0,0,0,0,0,1,0,0,0,0]],
-        
+
         #scale
         [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
         [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
@@ -659,7 +692,7 @@ def test():
         [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
         [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
         [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
-        
+
         #E3
         [[0,0,0,0,0]],
         [[2,1,2,1,2]],
@@ -845,13 +878,13 @@ def test():
         ]
 
     df=pd.read_csv("CL_Finger_mod.txt",header=None)
-    dict_fingering = df.set_index(0).T.to_dict('list')    
+    dict_fingering = df.set_index(0).T.to_dict('list')
 
     num=0
     correct=0
 
     for index,target_fingering in enumerate(test_list):
-        
+
         sharp_target_fingering=[]
         #print(target_fingering)
 
@@ -862,7 +895,7 @@ def test():
 
             sharp_note=get_sharp_note(note[:-1],note[-1])
             sharp_target_fingering.append(sharp_note)
- 
+
         assert(len(target_fingering)==len(answer[index][0]))
 
         output_list=dijkstra(sharp_target_fingering)
@@ -878,7 +911,7 @@ def test():
                         tmp_is_included=False
                 if tmp_is_included==True:
                     is_included=True
-        
+
         num+=1
 
         if is_included==False:
@@ -982,7 +1015,7 @@ def load_fingering_cost():
 
     df=pd.read_csv("sample_app/CL_Finger_mod.txt",header=None)
     dict_fingering = df.set_index(0).T.to_dict('list')
-    
+
     fingering_list=remove_ng_list(df[0].to_list())
     tone_range = list(set(item.split('_')[0] for item in fingering_list))
 
@@ -999,4 +1032,3 @@ def load_fingering_cost():
 def start(target_fingering):
     dic_cost,dic_note,tone_range=load_fingering_cost()
     return dijkstra(target_fingering)
-    
