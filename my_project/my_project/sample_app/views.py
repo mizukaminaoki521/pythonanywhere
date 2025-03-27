@@ -1,11 +1,14 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.forms import ModelForm
+from django import forms
+from django.urls import reverse
 
 from sample_app.models import Post
-from .utils import dic_cost,dic_note,tone_range
-
+from .utils import dic_cost,dic_note
+import urllib.parse
 import ast
 import pandas as pd
+import json
 
 fingering_list={}
 
@@ -185,59 +188,92 @@ def dijkstra(target_fingering):
     output_list = list(map(list, set(map(tuple, output_list))))
     return output_list
 
+def get_list(target_fingering):
+    assert(len(target_fingering)==1)
+    notes=dic_note[target_fingering[0]]
+    output_list=[]
+    output_list_tmp=[]
+    for i in range(len(notes)):
+        output_list_tmp.append(i)
+    output_list.append(output_list_tmp)
+    return output_list
 
 def create_post(request):
-    """
-    新たなデータを作成する
-    """
-    # オブジェクトを新規作成する
     post = Post()
-    # ページロード時
+    # GETリクエストの場合
     if request.method == 'GET':
-        # 新規作成オブジェクトにより form を作成
-        form = PostForm(instance=post)
-        # ページロード時は form を Template に渡す
-        return render(request,
-                      'sample_app/post_form.html',  # 呼び出す Template
-                      {'form': form})  # Template に渡すデータ
+        # URL に ?name=... が含まれているならその値を利用
+        name_param = request.GET.get('name', None)
+        if name_param:
+            # クエリパラメータから入力値を受け取る
+            post.name = name_param
 
-    # 実行ボタン押下時
-    if request.method == 'POST':
-        # POST されたデータにより form を作成
-        form = PostForm(request.POST, instance=post)
-
-        # 入力されたデータのバリデーション
-        if form.is_valid():
-            # チェック結果に問題なければデータを作成する
-            post = form.save(commit=False)
-
+            # 以下、POST時と同様の入力加工・計算処理を実施
             delete_chars = "\"'[ ]:;()=-^&%$!@*`<>./"
-            origin_text=post.name
+            origin_text = post.name
             post.name = origin_text.translate(str.maketrans("", "", delete_chars))
-            target_list=post.name.split(',')
+            if post.name.endswith(','):
+                post.name = post.name.rstrip(',')
+            target_list = post.name.split(',')
 
-            sharp_target_fingering=[]
-            #print(target_fingering)
-
+            sharp_target_fingering = []
             for note in target_list:
-                #print(note[:-1],note[-1])
-                assert(note[-1]=="3" or note[-1]=="4" or note[-1]=="5" or note[-1]=="6")
-                assert(note[0]=="A" or note[0]=="B" or note[0]=="C" or note[0]=="D" or note[0]=="E" or note[0]=="F" or note[0]=="G")
-
-                sharp_note=get_sharp_note(note[:-1],note[-1])
+                # 入力チェック（例：末尾が 3,4,5,6 で始まりは A〜G であること）
+                assert note[-1] in "34567", f"note: {note}の形式が不正"
+                assert note[0] in "ABCDEFG", f"note: {note}の形式が不正"
+                # 元のロジックでシャープ表記に変換
+                sharp_note = get_sharp_note(note[:-1], note[-1])
                 sharp_target_fingering.append(sharp_note)
-            output_list=dijkstra(sharp_target_fingering)
-            post.micropost=output_list
 
-            post.save()
+            if len(sharp_target_fingering) == 1:
+                output_list = get_list(sharp_target_fingering)
+                # もし1音のみなら、表示を繰り返す（元コードの挙動）
+                tone = post.name
+                sharp_target_fingering=[tone]
+                for i in range(len(output_list[0]) - 1):
+                    post.name += "," + tone
+                    sharp_target_fingering.append(tone)
+            else:
+                output_list = dijkstra(sharp_target_fingering)
+            post.micropost = output_list
 
-        return redirect('sample_app:read_post')
+            # ※DBに保存したい場合はここで post.save() する
+            # post.save()
+            #
+            # read_post ビューと同様の出力用データを作成する
+            target_list = post.name.split(',')
+            index_list = post.micropost  # これはリストのリストになっている前提
+            # 指定の CSV ファイルからフィンガリング情報を取得
+            df = pd.read_csv("/home/MizukamiNaoki/mysite/pythonanywhere/my_project/my_project/sample_app/CL_Finger_mod.txt", header=None)
+            dict_fingering = df.set_index(0).T.to_dict('list')
+
+            output = {"name": post.name, "target": []}
+            for j in range(len(index_list)):
+                kouho_dic = {"tone_index": [], "hole_list": []}
+                for i, d in enumerate(sharp_target_fingering):
+                    tone_index = sharp_target_fingering[i] + "_" + str(index_list[j][i])
+                    tone_hole = []
+                    for k, v in enumerate(dict_fingering[tone_index]):
+                        # v == 1 のときは「C」、そうでなければ「O」として処理
+                        CO = "C" if v == 1 else "O"
+                        if k <= 11:
+                            CO = "L" + str(k) + CO
+                        else:
+                            CO = "R" + str(k - 10) + CO
+                        tone_hole.append(CO)
+                    kouho_dic["tone_index"].append(target_list[i] + "_" + str(index_list[j][i]))
+                    kouho_dic["hole_list"].append(tone_hole)
+                output["target"].append(kouho_dic)
+
+            # クエリパラメータから直接結果を生成したので、post_list.html をレンダリング
+            return render(request, 'sample_app/post_list.html', {'posts': output})
+        else:
+            # クエリパラメータが無い場合は通常の入力フォームを表示
+            form = PostForm(instance=post)
+            return render(request, 'sample_app/post_form.html', {'form': form})
 
 
 def read_post(request):
-    """
-    データの一覧を表示する
-    """
     # 全オブジェクトを取得
     #posts = Post.objects.all().order_by('id')
     posts = Post.objects.all().order_by('-id').first()
@@ -340,3 +376,6 @@ class PostForm(ModelForm):
         # fields は models.py で定義している変数名
         fields = {'name', 'micropost'}
         #fields = {'name'}
+        widgets = {
+            'name': forms.TextInput(attrs={'id': 'note-input'}),  # カスタムIDを設定
+        }
