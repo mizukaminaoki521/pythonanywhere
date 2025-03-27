@@ -1,22 +1,377 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Clarinet fingering</title>
+  <meta charset="UTF-8">
+  <title>Clarinet Fingering</title>
+  <style>
+    /* 画像を囲む親要素のスタイル */
+    .image-container {
+      position: relative;
+      display: inline-block;
+      width: 100px; /* 画像と同じサイズ */
+      height: auto;
+    }
+    /* 最初の画像リストを包むコンテナ（上部の画像） */
+    .image-list {
+      font-size: 0; /* インライン要素間の余白を消す */
+    }
+    .image-list img {
+      width: auto;
+      height: 100px;
+      display: inline-block;
+      vertical-align: top;
+    }
+    /* 下に追加された画像を包むコンテナ */
+    #clicked-images-container {
+      display: flex; /* フレックスボックスでレイアウト管理 */
+    flex-wrap: wrap; /* 折り返しを許可 */
+    gap: 0; /* 隙間をゼロに設定 */
+    font-size: 0; /* インライン要素間の隙間を削除 */
+    }
+
+     /* 下部に追加される画像エリア */
+  #clicked-images-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    font-size: 0;
+    margin-top: 20px;
+  }
+  .no-delete {
+  cursor: default; /* マウスカーソルを変えないなど */
+}
+.image-container.no-delete:hover img {
+  opacity: 1 !important;
+}
+
+.image-container.no-delete:hover::after {
+  opacity: 0 !important;
+}
+
+/* クリックも不要なら、カーソルも変更 */
+.image-container.no-delete {
+  cursor: default;
+}
+
+  /* 追加される画像コンテナ */
+  .image-container {
+    position: relative;
+    display: inline-block;
+    width: 50px;  /* 小さくしたいサイズに合わせる */
+    margin: 0;
+    padding: 0;
+  }
+
+  /* コンテナ内の画像 */
+  .image-container img {
+    width: 100%;  /* コンテナにフィット */
+    height: auto;
+    display: block;
+    margin: 0;
+    padding: 0;
+    transition: opacity 0.3s ease;
+  }
+ .image-container::after {
+      content: '✕';
+      font-size: 24px;
+      color: red;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    /* マウスオーバー時のエフェクト */
+    .image-container:hover img {
+      opacity: 0.5;
+    }
+    .image-container:hover::after {
+      opacity: 1;
+    }
+    .image-container:hover {
+      cursor: pointer;
+    }
+  </style>
+  <script>
+    // 上部の画像クリック時に入力フィールドに音名を追加
+    function addNoteToInput(note) {
+      const inputField = document.getElementById('note-input');
+      const currentValue = inputField.value.split(',').filter(v => v); // 空文字を除外
+      currentValue.push(note);
+      inputField.value = currentValue.join(',');
+    }
+
+    // 下部の画像コンテナをクリックしたとき、その画像の位置に対応する音名を削除
+    function removeImageAndNote(imageContainer) {
+      // 下部画像が入っているコンテナから、クリックされた画像コンテナのインデックスを取得
+      const container = document.getElementById('clicked-images-container');
+      const children = Array.from(container.children);
+      const index = children.indexOf(imageContainer);
+      if (index !== -1) {
+        // 画像コンテナから削除
+        container.removeChild(imageContainer);
+
+        // 入力フィールドから対応する音名（インデックス順）を削除する
+        const inputField = document.getElementById('note-input');
+        let notesArray = inputField.value.split(',').filter(v => v);
+        notesArray.splice(index, 1);
+        inputField.value = notesArray.join(',');
+      }
+    }
+
+    // 上部の画像クリック時と同時に、下部に画像を追加する
+    function addImageBelow(imageSrc, altText, noteName) {
+      const container = document.getElementById('clicked-images-container');
+      const imageContainer = document.createElement('div');
+      imageContainer.classList.add('image-container');
+
+      const newImg = document.createElement('img');
+      newImg.src = imageSrc;
+      newImg.alt = altText;
+      imageContainer.appendChild(newImg);
+
+      // クリック時に、この画像コンテナと入力欄の対応する音名を削除
+        imageContainer.onclick = function() {
+        removeImageAndNote(imageContainer);
+        };
+      container.appendChild(imageContainer);
+    }
+  </script>
 </head>
 <body>
-    <h4>入力画面</h4>
-    <h5>入力例 E3,F#3,Bb3,C4 範囲[E3~F7]</h5>
+  <h4>入力画面</h4>
+  <h5>下の音符をクリックしてフレーズを作成</h5>
 
-    {% if post_id %}
-    <form action="{% url 'sample_app:edit_post' post_id=post_id %}" method="post">
-    {% else %}
-    <form action="{% url 'sample_app:create_post' %}" method="post">
-    {% endif %}
-      {% csrf_token %}
-      {{ form.name }}
-          <button type="submit">送信</button>
-    </form>
-    <!--<a href="{% url 'sample_app:read_post' %}">戻る</a>-->
+  {% if post_id %}
+  <form action="{% url 'sample_app:edit_post' post_id=post_id %}" method="get">
+  {% else %}
+  <form action="{% url 'sample_app:create_post' %}" method="get">
+  {% endif %}
+    {% csrf_token %}
+
+    <!-- 上部の画像リスト（クリックで音名追加＆画像追加） -->
+    <div class="image-list">
+        <img src="{% static 'sample_app/images/tc.png' %}" alt="TC">
+        <img src="{% static 'sample_app/images/e3.png' %}" alt="E3"
+           onclick="addNoteToInput('E3'); addImageBelow('{% static 'sample_app/images/e3.png' %}', 'E3', 'E3');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+        <img src="{% static 'sample_app/images/f3.png' %}" alt="F3"
+           onclick="addNoteToInput('F3'); addImageBelow('{% static 'sample_app/images/f3.png' %}', 'F3', 'F3');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+        <img src="{% static 'sample_app/images/fs3.png' %}" alt="F#3"
+           onclick="addNoteToInput('F#3'); addImageBelow('{% static 'sample_app/images/fs3.png' %}', 'F#3', 'F#3');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+        <img src="{% static 'sample_app/images/g3.png' %}" alt="G3"
+           onclick="addNoteToInput('G3'); addImageBelow('{% static 'sample_app/images/g3.png' %}', 'G3', 'G3');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+        <img src="{% static 'sample_app/images/gs3.png' %}" alt="G#3"
+           onclick="addNoteToInput('G#3'); addImageBelow('{% static 'sample_app/images/gs3.png' %}', 'G#3', 'G#3');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+        <img src="{% static 'sample_app/images/a3.png' %}" alt="A3"
+           onclick="addNoteToInput('A3'); addImageBelow('{% static 'sample_app/images/a3.png' %}', 'A3', 'A3');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+        <img src="{% static 'sample_app/images/as3.png' %}" alt="A#3"
+           onclick="addNoteToInput('A#3'); addImageBelow('{% static 'sample_app/images/as3.png' %}', 'A#3', 'A#3');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+        <img src="{% static 'sample_app/images/b3.png' %}" alt="B3"
+           onclick="addNoteToInput('B3'); addImageBelow('{% static 'sample_app/images/b3.png' %}', 'B3', 'B3');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+        <img src="{% static 'sample_app/images/c4.png' %}" alt="C4"
+           onclick="addNoteToInput('C4'); addImageBelow('{% static 'sample_app/images/c4.png' %}', 'C4', 'C4');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/cs4.png' %}" alt="C#4"
+           onclick="addNoteToInput('C#4'); addImageBelow('{% static 'sample_app/images/cs4.png' %}', 'C#4', 'C#4');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/d4.png' %}" alt="D4"
+           onclick="addNoteToInput('D4'); addImageBelow('{% static 'sample_app/images/d4.png' %}', 'D4', 'D4');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/ds4.png' %}" alt="D#4"
+           onclick="addNoteToInput('D#4'); addImageBelow('{% static 'sample_app/images/ds4.png' %}', 'D#4', 'D#4');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/e4.png' %}" alt="E4"
+           onclick="addNoteToInput('E4'); addImageBelow('{% static 'sample_app/images/e4.png' %}', 'E4', 'E4');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/f4.png' %}" alt="F4"
+           onclick="addNoteToInput('F4'); addImageBelow('{% static 'sample_app/images/f4.png' %}', 'F4', 'F4');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/fs4.png' %}" alt="F#4"
+           onclick="addNoteToInput('F#4'); addImageBelow('{% static 'sample_app/images/fs4.png' %}', 'F#4', 'F#4');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/g4.png' %}" alt="G4"
+           onclick="addNoteToInput('G4'); addImageBelow('{% static 'sample_app/images/g4.png' %}', 'G4', 'G4');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/gs4.png' %}" alt="G#4"
+           onclick="addNoteToInput('G#4'); addImageBelow('{% static 'sample_app/images/gs4.png' %}', 'G#4', 'G#4');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/a4.png' %}" alt="A4"
+           onclick="addNoteToInput('A4'); addImageBelow('{% static 'sample_app/images/a4.png' %}', 'A4', 'A4');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/as4.png' %}" alt="A#4"
+           onclick="addNoteToInput('A#4'); addImageBelow('{% static 'sample_app/images/as4.png' %}', 'A#4', 'A#4');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/b4.png' %}" alt="B4"
+           onclick="addNoteToInput('B4'); addImageBelow('{% static 'sample_app/images/b4.png' %}', 'B4', 'B4');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+        <img src="{% static 'sample_app/images/c5.png' %}" alt="C5"
+           onclick="addNoteToInput('C5'); addImageBelow('{% static 'sample_app/images/c5.png' %}', 'C5', 'C5');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/cs5.png' %}" alt="C#5"
+           onclick="addNoteToInput('C#5'); addImageBelow('{% static 'sample_app/images/cs5.png' %}', 'C#5', 'C#5');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/d5.png' %}" alt="D5"
+           onclick="addNoteToInput('D5'); addImageBelow('{% static 'sample_app/images/d5.png' %}', 'D5', 'D5');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/ds5.png' %}" alt="D#5"
+           onclick="addNoteToInput('D#5'); addImageBelow('{% static 'sample_app/images/ds5.png' %}', 'D#5', 'D#5');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/e5.png' %}" alt="E5"
+           onclick="addNoteToInput('E5'); addImageBelow('{% static 'sample_app/images/e5.png' %}', 'E5', 'E5');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/f5.png' %}" alt="F5"
+           onclick="addNoteToInput('F5'); addImageBelow('{% static 'sample_app/images/f5.png' %}', 'F5', 'F5');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/fs5.png' %}" alt="F#5"
+           onclick="addNoteToInput('F#5'); addImageBelow('{% static 'sample_app/images/fs5.png' %}', 'F#5', 'F#5');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/g5.png' %}" alt="G5"
+           onclick="addNoteToInput('G5'); addImageBelow('{% static 'sample_app/images/g5.png' %}', 'G5', 'G5');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/gs5.png' %}" alt="G#5"
+           onclick="addNoteToInput('G#5'); addImageBelow('{% static 'sample_app/images/gs5.png' %}', 'G#5', 'G#5');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/a5.png' %}" alt="A5"
+           onclick="addNoteToInput('A5'); addImageBelow('{% static 'sample_app/images/a5.png' %}', 'A5', 'A5');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/as5.png' %}" alt="A#5"
+           onclick="addNoteToInput('A#5'); addImageBelow('{% static 'sample_app/images/as5.png' %}', 'A#5', 'A#5');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/b5.png' %}" alt="B5"
+           onclick="addNoteToInput('B5'); addImageBelow('{% static 'sample_app/images/b5.png' %}', 'B5', 'B5');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+    </div>
+
+    <div class="image-list">
+        <img src="{% static 'sample_app/images/tc.png' %}" alt="TC">
+      <img src="{% static 'sample_app/images/c6.png' %}" alt="C6"
+           onclick="addNoteToInput('C6'); addImageBelow('{% static 'sample_app/images/c6.png' %}', 'C6', 'C6');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/cs6.png' %}" alt="C#6"
+           onclick="addNoteToInput('C#6'); addImageBelow('{% static 'sample_app/images/cs6.png' %}', 'C#6', 'C#6');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/d6.png' %}" alt="D6"
+           onclick="addNoteToInput('D6'); addImageBelow('{% static 'sample_app/images/d6.png' %}', 'D6', 'D6');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/ds6.png' %}" alt="D#6"
+           onclick="addNoteToInput('D#6'); addImageBelow('{% static 'sample_app/images/ds6.png' %}', 'D#6', 'D#6');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/e6.png' %}" alt="E6"
+           onclick="addNoteToInput('E6'); addImageBelow('{% static 'sample_app/images/e6.png' %}', 'E6', 'E6');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/f6.png' %}" alt="F6"
+           onclick="addNoteToInput('F6'); addImageBelow('{% static 'sample_app/images/f6.png' %}', 'F6', 'F6');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/fs6.png' %}" alt="F#6"
+           onclick="addNoteToInput('F#6'); addImageBelow('{% static 'sample_app/images/fs6.png' %}', 'F#6', 'F#6');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/g6.png' %}" alt="G6"
+           onclick="addNoteToInput('G6'); addImageBelow('{% static 'sample_app/images/g6.png' %}', 'G6', 'G6');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/gs6.png' %}" alt="G#6"
+           onclick="addNoteToInput('G#6'); addImageBelow('{% static 'sample_app/images/gs6.png' %}', 'G#6', 'G#6');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/a6.png' %}" alt="A6"
+           onclick="addNoteToInput('A6'); addImageBelow('{% static 'sample_app/images/a6.png' %}', 'A6', 'A6');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/as6.png' %}" alt="A#6"
+           onclick="addNoteToInput('A#6'); addImageBelow('{% static 'sample_app/images/as6.png' %}', 'A#6', 'A#6');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/b6.png' %}" alt="B6"
+           onclick="addNoteToInput('B6'); addImageBelow('{% static 'sample_app/images/b6.png' %}', 'B6', 'B6');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+        <img src="{% static 'sample_app/images/c7.png' %}" alt="C7"
+           onclick="addNoteToInput('C7'); addImageBelow('{% static 'sample_app/images/c7.png' %}', 'C7', 'C7');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/cs7.png' %}" alt="C#7"
+           onclick="addNoteToInput('C#7'); addImageBelow('{% static 'sample_app/images/cs7.png' %}', 'C#7', 'C#7');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/d7.png' %}" alt="D7"
+           onclick="addNoteToInput('D7'); addImageBelow('{% static 'sample_app/images/d7.png' %}', 'D7', 'D7');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/ds7.png' %}" alt="D#7"
+           onclick="addNoteToInput('D#7'); addImageBelow('{% static 'sample_app/images/ds7.png' %}', 'D#7', 'D#7');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/e7.png' %}" alt="E7"
+           onclick="addNoteToInput('E7'); addImageBelow('{% static 'sample_app/images/e7.png' %}', 'E7', 'E7');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+         <img src="{% static 'sample_app/images/f7.png' %}" alt="F7"
+           onclick="addNoteToInput('F7'); addImageBelow('{% static 'sample_app/images/f7.png' %}', 'F7', 'F7');"
+           onmouseover="this.style.opacity=0.7"
+           onmouseout="this.style.opacity=1">
+
+    </div>
+
+    <!-- クリックされた画像が追加表示される領域 -->
+    <div id="clicked-images-container" style="margin-top: 20px;">
+      <div class="image-container no-delete">
+    <img src="{% static 'sample_app/images/tc.png' %}" alt="TC">
+  </div>
+    </div>
+
+
+    <!-- 入力フィールド（ここに音名がカンマ区切りで入力される） -->
+    <input id="note-input" type="text" name="name" placeholder="ここに音名を表示。直接の編集は非推奨" style="width: 300px; margin-top: 10px;">
+    <button type="submit">送信</button>
+  </form>
 </body>
 </html>
