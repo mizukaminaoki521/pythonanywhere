@@ -4,22 +4,132 @@
     <meta charset="UTF-8">
     {% load static %}
     <title>Post lists</title>
+    <style>
+  .horizontal-images {
+    display: flex;
+    gap: 80.8px; /* 画像同士の間に余白を追加 */
+    flex-wrap: nowrap; /* 折り返しを禁止 */
+    width: 100%; /* コンテナの幅を画面いっぱいに設定 */
+}
+
+  .horizontal-images img {
+    /*max-width: auto;*/ /* 画像の最大幅を指定（必要に応じて調整してください） */
+    height: 100px;
+  }
+</style>
 </head>
 <body>
-   <!--<table>
-
-   <thead>
-      <tr>
-        <th>ID</th>
-        <th>User Name</th>
-        <th>Post</th>
-      </tr>
-
-  </table>-->
   <a href="{% url 'sample_app:create_post' %}">戻る</a>
 <style></style>
 {{linebreaks}}
-{{posts.name|linebreaks}}
+<!-- {{posts.name|linebreaks}}-->
+
+<div class="horizontal-images">
+   {% for tone in posts.tone_list %}
+            {% if tone == "E3" %}
+                <img src="{% static 'sample_app/images/e3.png' %}" alt="E3">
+            {% elif tone == "F3" %}
+                <img src="{% static 'sample_app/images/f3.png' %}" alt="F3">
+            {% elif tone == "F#3" %}
+                <img src="{% static 'sample_app/images/fs3.png' %}" alt="F#3">
+            {% elif tone == "G3" %}
+                <img src="{% static 'sample_app/images/g3.png' %}" alt="G3">
+            {% elif tone == "G#3" %}
+                <img src="{% static 'sample_app/images/gs3.png' %}" alt="G#3">
+            {% elif tone == "A3" %}
+                <img src="{% static 'sample_app/images/a3.png' %}" alt="A3">
+            {% elif tone == "A#3" %}
+                <img src="{% static 'sample_app/images/as3.png' %}" alt="A#3">
+            {% elif tone == "B3" %}
+                <img src="{% static 'sample_app/images/b3.png' %}" alt="B3">
+            {% elif tone == "C4" %}
+                <img src="{% static 'sample_app/images/c4.png' %}" alt="C4">
+            {% elif tone == "C#4" %}
+                <img src="{% static 'sample_app/images/cs4.png' %}" alt="C#4">
+            {% elif tone == "D4" %}
+                <img src="{% static 'sample_app/images/d4.png' %}" alt="D4">
+            {% elif tone == "D#4" %}
+                <img src="{% static 'sample_app/images/ds4.png' %}" alt="D#4">
+            {% elif tone == "E4" %}
+                <img src="{% static 'sample_app/images/e4.png' %}" alt="E4">
+            {% elif tone == "F4" %}
+                <img src="{% static 'sample_app/images/f4.png' %}" alt="F4">
+            {% elif tone == "F#4" %}
+                <img src="{% static 'sample_app/images/fs4.png' %}" alt="F#4">
+            {% elif tone == "G4" %}
+                <img src="{% static 'sample_app/images/g4.png' %}" alt="G4">
+            {% elif tone == "G#4" %}
+                <img src="{% static 'sample_app/images/gs4.png' %}" alt="G#4">
+            {% elif tone == "A4" %}
+                <img src="{% static 'sample_app/images/a4.png' %}" alt="A4">
+            {% elif tone == "A#4" %}
+                <img src="{% static 'sample_app/images/as4.png' %}" alt="A#4">
+            {% elif tone == "B4" %}
+                <img src="{% static 'sample_app/images/b4.png' %}" alt="B4">
+            {% elif tone == "C5" %}
+                <img src="{% static 'sample_app/images/c5.png' %}" alt="C5">
+            {% elif tone == "C#5" %}
+                <img src="{% static 'sample_app/images/cs5.png' %}" alt="C#5">
+            {% elif tone == "D5" %}
+                <img src="{% static 'sample_app/images/d5.png' %}" alt="D5">
+            {% elif tone == "D#5" %}
+                <img src="{% static 'sample_app/images/ds5.png' %}" alt="D#5">
+            {% elif tone == "E5" %}
+                <img src="{% static 'sample_app/images/e5.png' %}" alt="E5">
+            {% elif tone == "F5" %}
+                <img src="{% static 'sample_app/images/f5.png' %}" alt="F5">
+            {% elif tone == "F#5" %}
+                <img src="{% static 'sample_app/images/fs5.png' %}" alt="F#5">
+            {% elif tone == "G5" %}
+                <img src="{% static 'sample_app/images/g5.png' %}" alt="G5">
+            {% elif tone == "G#5" %}
+                <img src="{% static 'sample_app/images/gs5.png' %}" alt="G#5">
+            {% elif tone == "A5" %}
+                <img src="{% static 'sample_app/images/a5.png' %}" alt="A5">
+            {% elif tone == "A#5" %}
+                <img src="{% static 'sample_app/images/as5.png' %}" alt="A#5">
+            {% elif tone == "B5" %}
+                <img src="{% static 'sample_app/images/b5.png' %}" alt="B5">
+            {% elif tone == "C6" %}
+                <img src="{% static 'sample_app/images/c6.png' %}" alt="C6">
+            {% elif tone == "C#6" %}
+                <img src="{% static 'sample_app/images/cs6.png' %}" alt="C#6">
+            {% elif tone == "D6" %}
+                <img src="{% static 'sample_app/images/d6.png' %}" alt="D6">
+            {% elif tone == "D#6" %}
+                <img src="{% static 'sample_app/images/ds6.png' %}" alt="D#6">
+            {% elif tone == "E6" %}
+                <img src="{% static 'sample_app/images/e6.png' %}" alt="E6">
+            {% elif tone == "F6" %}
+                <img src="{% static 'sample_app/images/f6.png' %}" alt="F6">
+            {% elif tone == "F#6" %}
+                <img src="{% static 'sample_app/images/fs6.png' %}" alt="F#6">
+            {% elif tone == "G6" %}
+                <img src="{% static 'sample_app/images/g6.png' %}" alt="G6">
+            {% elif tone == "G#6" %}
+                <img src="{% static 'sample_app/images/gs6.png' %}" alt="G#6">
+            {% elif tone == "A6" %}
+                <img src="{% static 'sample_app/images/a6.png' %}" alt="A6">
+            {% elif tone == "A#6" %}
+                <img src="{% static 'sample_app/images/as6.png' %}" alt="A#6">
+            {% elif tone == "B6" %}
+                <img src="{% static 'sample_app/images/b6.png' %}" alt="B6">
+            {% elif tone == "C7" %}
+                <img src="{% static 'sample_app/images/c7.png' %}" alt="C7">
+            {% elif tone == "C#7" %}
+                <img src="{% static 'sample_app/images/cs7.png' %}" alt="C#7">
+            {% elif tone == "D7" %}
+                <img src="{% static 'sample_app/images/d7.png' %}" alt="D7">
+            {% elif tone == "D#7" %}
+                <img src="{% static 'sample_app/images/ds7.png' %}" alt="D#7">
+            {% elif tone == "E7" %}
+                <img src="{% static 'sample_app/images/e7.png' %}" alt="E7">
+            {% elif tone == "F7" %}
+                <img src="{% static 'sample_app/images/f7.png' %}" alt="F7">
+            {% endif %}
+    {% endfor %}
+</div>
+
 {% for targets in posts.target %}
 第{{forloop.counter}}候補
 
@@ -29,7 +139,7 @@
         {{targets.tone_index|slice:forloop.counter|last}}
         {{linebreaks}}
 
-        <div style="width: 200px;">
+        <div style="width: 100px;">
           <svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 314.51 862.19">
             <defs>
               <style>

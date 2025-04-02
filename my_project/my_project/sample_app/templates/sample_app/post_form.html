@@ -9,20 +9,25 @@
     .image-container {
       position: relative;
       display: inline-block;
-      width: 100px; /* 画像と同じサイズ */
-      height: auto;
+      width: auto; /* 画像と同じサイズ */
+      height: 100px;
     }
     /* 最初の画像リストを包むコンテナ（上部の画像） */
     .image-list {
       font-size: 0; /* インライン要素間の余白を消す */
+      overflow-x: auto; /* 横スクロールを許可 */
+      white-space: nowrap; /* 横並びを維持 */
     }
     .image-list img {
       width: auto;
       height: 100px;
       display: inline-block;
       vertical-align: top;
+
     }
-    /* 下に追加された画像を包むコンテナ */
+
+
+    /* 追加された画像を包むコンテナ */
     #clicked-images-container {
       display: flex; /* フレックスボックスでレイアウト管理 */
     flex-wrap: wrap; /* 折り返しを許可 */
@@ -30,13 +35,15 @@
     font-size: 0; /* インライン要素間の隙間を削除 */
     }
 
-     /* 下部に追加される画像エリア */
+
+     /* 追加される画像エリア */
   #clicked-images-container {
     display: flex;
     flex-wrap: wrap;
     gap: 0;
     font-size: 0;
     margin-top: 20px;
+    margin-bottom: 100px;
   }
   .no-delete {
   cursor: default; /* マウスカーソルを変えないなど */
@@ -58,20 +65,21 @@
   .image-container {
     position: relative;
     display: inline-block;
-    width: 50px;  /* 小さくしたいサイズに合わせる */
+    height:100px;  /* 小さくしたいサイズに合わせる */
     margin: 0;
     padding: 0;
   }
 
   /* コンテナ内の画像 */
   .image-container img {
-    width: 100%;  /* コンテナにフィット */
-    height: auto;
+    width: auto;  /* コンテナにフィット */
+    height: 100pt;
     display: block;
     margin: 0;
     padding: 0;
-    transition: opacity 0.3s ease;
+    /*transition: opacity 0.3s ease;*/
   }
+  /*
  .image-container::after {
       content: '✕';
       font-size: 24px;
@@ -82,8 +90,9 @@
       transform: translate(-50%, -50%);
       opacity: 0;
       transition: opacity 0.3s ease;
-    }
+    }*/
     /* マウスオーバー時のエフェクト */
+    /*
     .image-container:hover img {
       opacity: 0.5;
     }
@@ -92,7 +101,7 @@
     }
     .image-container:hover {
       cursor: pointer;
-    }
+    }*/
   </style>
   <script>
     // 上部の画像クリック時に入力フィールドに音名を追加
@@ -131,18 +140,111 @@
       newImg.src = imageSrc;
       newImg.alt = altText;
       imageContainer.appendChild(newImg);
-
+/*
       // クリック時に、この画像コンテナと入力欄の対応する音名を削除
         imageContainer.onclick = function() {
         removeImageAndNote(imageContainer);
-        };
+        };*/
       container.appendChild(imageContainer);
     }
+
+    function removeLastNote() {
+  const container = document.getElementById('clicked-images-container');
+  const inputField = document.getElementById('note-input');
+
+  // 下部画像コンテナから最後の画像を取得
+  const children = Array.from(container.children);
+  if (children.length > 1) { // no-deleteクラスの画像は削除しない
+    const lastChild = children[children.length - 1];
+    container.removeChild(lastChild);
+
+    // 入力フィールドから最後の音名を削除
+    let notesArray = inputField.value.split(',').filter(v => v);
+    notesArray.pop(); // 最後の音名を削除
+    inputField.value = notesArray.join(',');
+  }
+}
+
+    function resetAll() {
+  // 入力フィールドをクリア
+  const inputField = document.getElementById('note-input');
+  if (inputField) {
+    inputField.value = '';
+  }
+
+  // 下部の画像コンテナをクリア
+  const clickedImagesContainer = document.getElementById('clicked-images-container');
+  if (clickedImagesContainer) {
+    // 最初の固定画像（no-deleteクラス）を除いて削除
+    const removableImages = clickedImagesContainer.querySelectorAll('.image-container:not(.no-delete)');
+    removableImages.forEach(image => clickedImagesContainer.removeChild(image));
+  }
+}
+function preloadImages(imageUrls) {
+  imageUrls.forEach(src => {
+    const img = new Image();
+    img.src = src; // 画像を事前にロード
+  });
+}
+
+// ページ読み込み時に画像を事前ロード
+document.addEventListener("DOMContentLoaded", function () {
+  preloadImages([
+    "{% static 'sample_app/images/e3.png' %}",
+    "{% static 'sample_app/images/f3.png' %}",
+    "{% static 'sample_app/images/fs3.png' %}",
+    "{% static 'sample_app/images/g3.png' %}",
+    "{% static 'sample_app/images/gs3.png' %}",
+    "{% static 'sample_app/images/a3.png' %}",
+    "{% static 'sample_app/images/as3.png' %}",
+    "{% static 'sample_app/images/b3.png' %}",
+    "{% static 'sample_app/images/c4.png' %}",
+    "{% static 'sample_app/images/cs4.png' %}",
+    "{% static 'sample_app/images/d4.png' %}",
+    "{% static 'sample_app/images/ds4.png' %}",
+    "{% static 'sample_app/images/e4.png' %}",
+    "{% static 'sample_app/images/f4.png' %}",
+    "{% static 'sample_app/images/fs4.png' %}",
+    "{% static 'sample_app/images/g4.png' %}",
+    "{% static 'sample_app/images/gs4.png' %}",
+    "{% static 'sample_app/images/a4.png' %}",
+    "{% static 'sample_app/images/as4.png' %}",
+    "{% static 'sample_app/images/b4.png' %}",
+    "{% static 'sample_app/images/c5.png' %}",
+    "{% static 'sample_app/images/cs5.png' %}",
+    "{% static 'sample_app/images/d5.png' %}",
+    "{% static 'sample_app/images/ds5.png' %}",
+    "{% static 'sample_app/images/e5.png' %}",
+    "{% static 'sample_app/images/f5.png' %}",
+    "{% static 'sample_app/images/fs5.png' %}",
+    "{% static 'sample_app/images/g5.png' %}",
+    "{% static 'sample_app/images/gs5.png' %}",
+    "{% static 'sample_app/images/a5.png' %}",
+    "{% static 'sample_app/images/as5.png' %}",
+    "{% static 'sample_app/images/b5.png' %}",
+    "{% static 'sample_app/images/c6.png' %}",
+    "{% static 'sample_app/images/cs6.png' %}",
+    "{% static 'sample_app/images/d6.png' %}",
+    "{% static 'sample_app/images/ds6.png' %}",
+    "{% static 'sample_app/images/e6.png' %}",
+    "{% static 'sample_app/images/f6.png' %}",
+    "{% static 'sample_app/images/fs6.png' %}",
+    "{% static 'sample_app/images/g6.png' %}",
+    "{% static 'sample_app/images/gs6.png' %}",
+    "{% static 'sample_app/images/a6.png' %}",
+    "{% static 'sample_app/images/as6.png' %}",
+    "{% static 'sample_app/images/b6.png' %}",
+     "{% static 'sample_app/images/c7.png' %}",
+    "{% static 'sample_app/images/cs7.png' %}",
+    "{% static 'sample_app/images/d7.png' %}",
+    "{% static 'sample_app/images/ds7.png' %}",
+    "{% static 'sample_app/images/e7.png' %}",
+    "{% static 'sample_app/images/f7.png' %}",
+  ]);
+});
   </script>
 </head>
 <body>
-  <h4>入力画面</h4>
-  <h5>下の音符をクリックしてフレーズを作成</h5>
 
   {% if post_id %}
   <form action="{% url 'sample_app:edit_post' post_id=post_id %}" method="get">
@@ -150,6 +252,17 @@
   <form action="{% url 'sample_app:create_post' %}" method="get">
   {% endif %}
     {% csrf_token %}
+
+
+
+    <!-- クリックされた画像が追加表示される領域 -->
+    <div id="clicked-images-container" style="margin-top: 20px;">
+      <div class="image-container no-delete">
+    <img src="{% static 'sample_app/images/tc.png' %}" alt="TC">
+  </div>
+    </div>
+
+    <h5>下の音符をクリックしてフレーズを作成</h5>
 
     <!-- 上部の画像リスト（クリックで音名追加＆画像追加） -->
     <div class="image-list">
@@ -282,11 +395,7 @@
            onclick="addNoteToInput('B5'); addImageBelow('{% static 'sample_app/images/b5.png' %}', 'B5', 'B5');"
            onmouseover="this.style.opacity=0.7"
            onmouseout="this.style.opacity=1">
-    </div>
-
-    <div class="image-list">
-        <img src="{% static 'sample_app/images/tc.png' %}" alt="TC">
-      <img src="{% static 'sample_app/images/c6.png' %}" alt="C6"
+         <img src="{% static 'sample_app/images/c6.png' %}" alt="C6"
            onclick="addNoteToInput('C6'); addImageBelow('{% static 'sample_app/images/c6.png' %}', 'C6', 'C6');"
            onmouseover="this.style.opacity=0.7"
            onmouseout="this.style.opacity=1">
@@ -361,17 +470,14 @@
 
     </div>
 
-    <!-- クリックされた画像が追加表示される領域 -->
-    <div id="clicked-images-container" style="margin-top: 20px;">
-      <div class="image-container no-delete">
-    <img src="{% static 'sample_app/images/tc.png' %}" alt="TC">
-  </div>
-    </div>
-
-
     <!-- 入力フィールド（ここに音名がカンマ区切りで入力される） -->
-    <input id="note-input" type="text" name="name" placeholder="ここに音名を表示。直接の編集は非推奨" style="width: 300px; margin-top: 10px;">
-    <button type="submit">送信</button>
+    <input id="note-input" type="text" name="name" placeholder="ここに音名を表示。直接の編集は非推奨" style="width: 300px; margin-top: 10px; display: none;">
+    <!--<input id="note-input" type="text" name="name" placeholder="ここに音名を表示。直接の編集は非推奨" style="width: 300px; margin-top: 10px;">-->
+
+    <button type="button" onclick="removeLastNote()">バックスペース</button>
+    <button type="button" onclick="resetAll()">フレーズをクリア</button>
+    <button type="submit">作成したフレーズを送信</button>
+
   </form>
 </body>
 </html>
