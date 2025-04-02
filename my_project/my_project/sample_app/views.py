@@ -247,7 +247,7 @@ def create_post(request):
             df = pd.read_csv("/home/MizukamiNaoki/mysite/pythonanywhere/my_project/my_project/sample_app/CL_Finger_mod.txt", header=None)
             dict_fingering = df.set_index(0).T.to_dict('list')
 
-            output = {"name": post.name, "target": []}
+            output = {"name": post.name,"tone_list":target_list, "target": []}
             for j in range(len(index_list)):
                 kouho_dic = {"tone_index": [], "hole_list": []}
                 for i, d in enumerate(sharp_target_fingering):
