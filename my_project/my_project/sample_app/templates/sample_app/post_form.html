@@ -17,6 +17,7 @@
       font-size: 0; /* インライン要素間の余白を消す */
       overflow-x: auto; /* 横スクロールを許可 */
       white-space: nowrap; /* 横並びを維持 */
+       margin-top: -20px;
     }
     .image-list img {
       width: auto;
@@ -26,24 +27,14 @@
 
     }
 
-
-    /* 追加された画像を包むコンテナ */
-    #clicked-images-container {
-      display: flex; /* フレックスボックスでレイアウト管理 */
-    flex-wrap: wrap; /* 折り返しを許可 */
-    gap: 0; /* 隙間をゼロに設定 */
-    font-size: 0; /* インライン要素間の隙間を削除 */
-    }
-
-
      /* 追加される画像エリア */
   #clicked-images-container {
     display: flex;
     flex-wrap: wrap;
     gap: 0;
     font-size: 0;
-    margin-top: 20px;
-    margin-bottom: 100px;
+    margin-top: 0px;
+    margin-bottom: 35px;
   }
   .no-delete {
   cursor: default; /* マウスカーソルを変えないなど */
@@ -251,12 +242,10 @@ document.addEventListener("DOMContentLoaded", function () {
   {% else %}
   <form action="{% url 'sample_app:create_post' %}" method="get">
   {% endif %}
+
     {% csrf_token %}
-
-
-
     <!-- クリックされた画像が追加表示される領域 -->
-    <div id="clicked-images-container" style="margin-top: 20px;">
+    <div id="clicked-images-container">
       <div class="image-container no-delete">
     <img src="{% static 'sample_app/images/tc.png' %}" alt="TC">
   </div>
@@ -476,7 +465,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     <button type="button" onclick="removeLastNote()">バックスペース</button>
     <button type="button" onclick="resetAll()">フレーズをクリア</button>
-    <button type="submit">作成したフレーズを送信</button>
+    <button type="submit">最適な運指を計算</button>
 
   </form>
 </body>
